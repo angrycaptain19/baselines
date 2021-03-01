@@ -171,10 +171,17 @@ def learn(*, network, env, total_timesteps,
     n_epochs = total_timesteps // n_cycles // rollout_worker.T // rollout_worker.rollout_batch_size
 
     return train(
-        save_path=save_path, policy=policy, rollout_worker=rollout_worker,
-        evaluator=evaluator, n_epochs=n_epochs, n_test_rollouts=params['n_test_rollouts'],
-        n_cycles=params['n_cycles'], n_batches=params['n_batches'],
-        policy_save_interval=policy_save_interval, demo_file=demo_file)
+        save_path=save_path,
+        policy=policy,
+        rollout_worker=rollout_worker,
+        evaluator=evaluator,
+        n_epochs=n_epochs,
+        n_test_rollouts=params['n_test_rollouts'],
+        n_cycles=n_cycles,
+        n_batches=params['n_batches'],
+        policy_save_interval=policy_save_interval,
+        demo_file=demo_file,
+    )
 
 
 @click.command()

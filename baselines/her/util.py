@@ -43,8 +43,7 @@ def import_function(spec):
     """
     mod_name, fn_name = spec.split(':')
     module = importlib.import_module(mod_name)
-    fn = getattr(module, fn_name)
-    return fn
+    return getattr(module, fn_name)
 
 
 def flatten_grads(var_list, grads):

@@ -167,9 +167,9 @@ class DDPG(object):
         demo_data_acs = demoData['acs']
         demo_data_info = demoData['info']
 
+        i = 0
         for epsd in range(self.num_demo): # we initialize the whole demo buffer at the start of the training
             obs, acts, goals, achieved_goals = [], [] ,[] ,[]
-            i = 0
             for transition in range(self.T - 1):
                 obs.append([demo_data_obs[epsd][transition].get('observation')])
                 acts.append([demo_data_acs[epsd][transition]])
@@ -278,8 +278,7 @@ class DDPG(object):
         transitions['o'], transitions['g'] = self._preprocess_og(o, ag, g)
         transitions['o_2'], transitions['g_2'] = self._preprocess_og(o_2, ag_2, g)
 
-        transitions_batch = [transitions[key] for key in self.stage_shapes.keys()]
-        return transitions_batch
+        return [transitions[key] for key in self.stage_shapes.keys()]
 
     def stage_batch(self, batch=None):
         if batch is None:
@@ -309,8 +308,9 @@ class DDPG(object):
         return res
 
     def _global_vars(self, scope):
-        res = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=self.scope + '/' + scope)
-        return res
+        return tf.get_collection(
+            tf.GraphKeys.GLOBAL_VARIABLES, scope=self.scope + '/' + scope
+        )
 
     def _create_network(self, reuse=False):
         logger.info("Creating a DDPG agent with action space %d x %s..." % (self.dimu, self.max_u))
@@ -422,7 +422,12 @@ class DDPG(object):
                              'main', 'target', 'lock', 'env', 'sample_transitions',
                              'stage_shapes', 'create_actor_critic']
 
-        state = {k: v for k, v in self.__dict__.items() if all([not subname in k for subname in excluded_subnames])}
+        state = {
+            k: v
+            for k, v in self.__dict__.items()
+            if all(subname not in k for subname in excluded_subnames)
+        }
+
         state['buffer_size'] = self.buffer_size
         state['tf'] = self.sess.run([x for x in self._global_vars('') if 'buffer' not in x.name])
         return state

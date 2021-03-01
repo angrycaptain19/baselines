@@ -179,8 +179,7 @@ def configure_ddpg(dims, params, reuse=False, use_mpi=True, clip_return=True):
     ddpg_params['info'] = {
         'env_name': params['env_name'],
     }
-    policy = DDPG(reuse=reuse, **ddpg_params, use_mpi=use_mpi)
-    return policy
+    return DDPG(reuse=reuse, **ddpg_params, use_mpi=use_mpi)
 
 
 def configure_dims(params):

@@ -31,10 +31,7 @@ def load_results(file):
         data = data.reshape(1, -1)
     assert data.ndim == 2
     assert data.shape[-1] == len(keys)
-    result = {}
-    for idx, key in enumerate(keys):
-        result[key] = data[:, idx]
-    return result
+    return {key: data[:, idx] for idx, key in enumerate(keys)}
 
 
 def pad(xs, value=np.nan):
@@ -77,14 +74,8 @@ for curr_path in paths:
     env_id = params['env_name']
     replay_strategy = params['replay_strategy']
 
-    if replay_strategy == 'future':
-        config = 'her'
-    else:
-        config = 'ddpg'
-    if 'Dense' in env_id:
-        config += '-dense'
-    else:
-        config += '-sparse'
+    config = 'her' if replay_strategy == 'future' else 'ddpg'
+    config += '-dense' if 'Dense' in env_id else '-sparse'
     env_id = env_id.replace('Dense', '')
 
     # Process and smooth data.

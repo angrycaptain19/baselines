@@ -23,7 +23,7 @@ class Runner(AbstractEnvRunner):
         mb_obs, mb_rewards, mb_actions, mb_values, mb_dones = [],[],[],[],[]
         mb_states = self.states
         epinfos = []
-        for n in range(self.nsteps):
+        for _ in range(self.nsteps):
             # Given observations, take action and value (V(s))
             # We already have self.obs because Runner superclass run self.obs[:] = env.reset() on init
             actions, values, states, _ = self.model.step(self.obs, S=self.states, M=self.dones)

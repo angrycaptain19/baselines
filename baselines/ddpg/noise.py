@@ -18,10 +18,9 @@ class AdaptiveParamNoiseSpec(object):
             self.current_stddev *= self.adoption_coefficient
 
     def get_stats(self):
-        stats = {
+        return {
             'param_noise_stddev': self.current_stddev,
         }
-        return stats
 
     def __repr__(self):
         fmt = 'AdaptiveParamNoiseSpec(initial_stddev={}, desired_action_stddev={}, adoption_coefficient={})'
