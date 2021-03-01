@@ -182,7 +182,9 @@ def function(inputs, outputs, updates=None, givens=None):
 class _Function(object):
     def __init__(self, inputs, outputs, updates, givens):
         for inpt in inputs:
-            if not hasattr(inpt, 'make_feed_dict') and not (type(inpt) is tf.Tensor and len(inpt.op.inputs) == 0):
+            if not hasattr(inpt, 'make_feed_dict') and (
+                type(inpt) is not tf.Tensor or len(inpt.op.inputs) != 0
+            ):
                 assert False, "inputs should all be placeholders, constants, or have a make_feed_dict method"
         self.inputs = inputs
         self.input_names = {inp.name.split("/")[-1].split(":")[0]: inp for inp in inputs}
@@ -208,8 +210,7 @@ class _Function(object):
             self._feed_input(feed_dict, inpt, value)
         for inpt_name, value in kwargs.items():
             self._feed_input(feed_dict, self.input_names[inpt_name], value)
-        results = get_session().run(self.outputs_update, feed_dict=feed_dict)[:-1]
-        return results
+        return get_session().run(self.outputs_update, feed_dict=feed_dict)[:-1]
 
 # ================================================================
 # Flat vectors
@@ -403,15 +404,6 @@ def adjust_shape(placeholder, data):
 
 def _check_shape(placeholder_shape, data_shape):
     ''' check if two shapes are compatible (i.e. differ only by dimensions of size 1, or by the batch dimension)'''
-
-    return True
-    squeezed_placeholder_shape = _squeeze_shape(placeholder_shape)
-    squeezed_data_shape = _squeeze_shape(data_shape)
-
-    for i, s_data in enumerate(squeezed_data_shape):
-        s_placeholder = squeezed_placeholder_shape[i]
-        if s_placeholder != -1 and s_data != s_placeholder:
-            return False
 
     return True
 

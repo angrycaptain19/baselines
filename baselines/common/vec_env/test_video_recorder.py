@@ -25,8 +25,7 @@ def test_video_recorder(klass, num_envs, video_length, video_interval):
     """
 
     def make_fn():
-        env = gym.make('PongNoFrameskip-v4')
-        return env
+        return gym.make('PongNoFrameskip-v4')
     fns = [make_fn for _ in range(num_envs)]
     env = klass(fns)
 

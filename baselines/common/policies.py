@@ -165,7 +165,7 @@ def build_policy(env, policy_network, value_network=None,  normalize_observation
                 # TODO recurrent architectures are not supported with value_network=copy yet
                 vf_latent = _v_net(encoded_x)
 
-        policy = PolicyWithValue(
+        return PolicyWithValue(
             env=env,
             observations=X,
             latent=policy_latent,
@@ -174,7 +174,6 @@ def build_policy(env, policy_network, value_network=None,  normalize_observation
             estimate_q=estimate_q,
             **extra_tensors
         )
-        return policy
 
     return policy_fn
 

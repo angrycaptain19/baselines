@@ -38,14 +38,11 @@ class HumanOutputFormat(KVWriter, SeqWriter):
         # Create strings for printing
         key2str = {}
         for (key, val) in sorted(kvs.items()):
-            if hasattr(val, '__float__'):
-                valstr = '%-8.3g' % val
-            else:
-                valstr = str(val)
+            valstr = '%-8.3g' % val if hasattr(val, '__float__') else str(val)
             key2str[self._truncate(key)] = self._truncate(valstr)
 
         # Find max widths
-        if len(key2str) == 0:
+        if not key2str:
             print('WARNING: tried to write empty key-value dict')
             return
         else:

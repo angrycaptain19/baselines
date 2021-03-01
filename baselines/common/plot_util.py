@@ -93,13 +93,12 @@ def one_sided_ema(xolds, yolds, low=None, high=None, n=512, decay_steps=1., low_
             if luoi >= len(xolds):
                 break
             xold = xolds[luoi]
-            if xold <= xnew:
-                decay = np.exp(- (xnew - xold) / decay_period)
-                sum_y += decay * yolds[luoi]
-                count_y += decay
-                luoi += 1
-            else:
+            if xold > xnew:
                 break
+            decay = np.exp(- (xnew - xold) / decay_period)
+            sum_y += decay * yolds[luoi]
+            count_y += decay
+            luoi += 1
         sum_ys[i] = sum_y
         count_ys[i] = count_y
 
@@ -181,8 +180,16 @@ def load_results(root_dir_or_dirs, enable_progress=True, enable_monitor=True, ve
                 files[:] = []
                 continue
             monitor_re = re.compile(r'(\d+\.)?(\d+\.)?monitor\.csv')
-            if set(['metadata.json', 'monitor.json', 'progress.json', 'progress.csv']).intersection(files) or \
-               any([f for f in files if monitor_re.match(f)]):  # also match monitor files like 0.1.monitor.csv
+            if set(
+                [
+                    'metadata.json',
+                    'monitor.json',
+                    'progress.json',
+                    'progress.csv',
+                ]
+            ).intersection(files) or any(
+                f for f in files if monitor_re.match(f)
+            ):  # also match monitor files like 0.1.monitor.csv
                 # used to be uncommented, which means do not go deeper than current directory if any of the data files
                 # are found
                 # dirs[:] = []
@@ -421,7 +428,10 @@ def test_smooth():
     yclean = np.sin(xs)
     ys = yclean + .1 * np.random.randn(yclean.size)
     xup, yup, _ = symmetric_ema(xs, ys, xs.min(), xs.max(), nup, decay_steps=nup/ndown)
-    xdown, ydown, _ = symmetric_ema(xs, ys, xs.min(), xs.max(), ndown, decay_steps=ndown/ndown)
+    xdown, ydown, _ = symmetric_ema(
+        xs, ys, xs.min(), xs.max(), ndown, decay_steps=1
+    )
+
     xsame, ysame, _ = symmetric_ema(xs, ys, xs.min(), xs.max(), norig, decay_steps=norig/ndown)
     plt.plot(xs, ys, label='orig', marker='x')
     plt.plot(xup, yup, label='up', marker='x')

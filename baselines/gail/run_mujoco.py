@@ -229,9 +229,8 @@ def traj_1_generator(pi, env, horizon, stochastic):
     rews = np.array(rews)
     news = np.array(news)
     acs = np.array(acs)
-    traj = {"ob": obs, "rew": rews, "new": news, "ac": acs,
+    return {"ob": obs, "rew": rews, "new": news, "ac": acs,
             "ep_ret": cur_ep_ret, "ep_len": cur_ep_len}
-    return traj
 
 
 if __name__ == '__main__':

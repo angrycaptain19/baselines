@@ -74,9 +74,7 @@ class KfacOptimizer():
             # combining additive gradient, assume they are the same op type and
             # indepedent
             if 'AddN' in bpropOp_name:
-                factors = []
-                for g in gradient.op.inputs:
-                    factors.append(searchFactors(g, graph))
+                factors = [searchFactors(g, graph) for g in gradient.op.inputs]
                 op_names = [item['opName'] for item in factors]
                 # TO-DO: need to check all the attribute of the ops as well
                 print (gradient.name)
@@ -102,7 +100,7 @@ class KfacOptimizer():
                     bTensor = [
                         i for i in bpropOp.inputs if 'gradientsSampled' in i.name][-1]
                     bTensorShape = fpropOp.outputs[0].get_shape()
-                    if bTensor.get_shape()[0].value == None:
+                    if bTensor.get_shape()[0].value is None:
                         bTensor.set_shape(bTensorShape)
                     bTensors.append(bTensor)
                     ###
@@ -116,10 +114,13 @@ class KfacOptimizer():
                     # unknown OPs, block approximation used
                     bInputsList = [i for i in bpropOp.inputs[
                         0].op.inputs if 'gradientsSampled' in i.name if 'Shape' not in i.name]
-                    if len(bInputsList) > 0:
+                    if bInputsList:
                         bTensor = bInputsList[0]
                         bTensorShape = fpropOp.outputs[0].get_shape()
-                        if len(bTensor.get_shape()) > 0 and bTensor.get_shape()[0].value == None:
+                        if (
+                            len(bTensor.get_shape()) > 0
+                            and bTensor.get_shape()[0].value is None
+                        ):
                             bTensor.set_shape(bTensorShape)
                         bTensors.append(bTensor)
                     fpropOp_name = opTypes.append('UNK-' + fpropOp.op_def.name)
@@ -324,8 +325,6 @@ class KfacOptimizer():
                         KH = int(convkernel_size[0])
                         KW = int(convkernel_size[1])
                         C = int(convkernel_size[2])
-                        flatten_size = int(KH * KW * C)
-
                         Oh = int(bpropFactor.get_shape()[1])
                         Ow = int(bpropFactor.get_shape()[2])
 
@@ -334,7 +333,7 @@ class KfacOptimizer():
                                 # assume independence among input channels
                                 # factor = B x 1 x 1 x (KH xKW x C)
                                 # patches = B x Oh x Ow x (KH xKW x C)
-                            if len(SVD_factors) == 0:
+                            if not SVD_factors:
                                 if KFAC_DEBUG:
                                     print(('approx %s act factor with rank-1 SVD factors' % (var.name)))
                                 # find closest rank-1 approx to the feature map
@@ -363,6 +362,8 @@ class KfacOptimizer():
                                 # T^2 terms * 1/T^2, size: B x C
                                 fpropFactor = tf.reduce_mean(patches, [1, 2])
                             else:
+                                flatten_size = int(KH * KW * C)
+
                                 # size: (B x Oh x Ow) x C
                                 fpropFactor = tf.reshape(
                                     patches, [-1, flatten_size]) / Oh / Ow
@@ -541,11 +542,7 @@ class KfacOptimizer():
         # eigenvectors around?)
         with tf.device('/cpu:0'):
             def removeNone(tensor_list):
-                local_list = []
-                for item in tensor_list:
-                    if item is not None:
-                        local_list.append(item)
-                return local_list
+                return [item for item in tensor_list if item is not None]
 
             def copyStats(var_list):
                 print("copying stats to buffer tensors before eigen decomp")
@@ -626,10 +623,10 @@ class KfacOptimizer():
 
         grad_dict = {var: grad for grad, var in zip(gradlist, varlist)}
 
+        GRAD_TRANSPOSE = False
+
         for grad, var in zip(gradlist, varlist):
             GRAD_RESHAPE = False
-            GRAD_TRANSPOSE = False
-
             fpropFactoredFishers = self.stats[var]['fprop_concat_stats']
             bpropFactoredFishers = self.stats[var]['bprop_concat_stats']
 
@@ -700,10 +697,10 @@ class KfacOptimizer():
                     if KFAC_DEBUG:
                         print(('weight decay coeff for %s is %f' % (var.name, weightDecayCoeff)))
 
+                coeffs = 1.
                 if self._factored_damping:
                     if KFAC_DEBUG:
                         print(('use factored damping for %s' % (var.name)))
-                    coeffs = 1.
                     num_factors = len(eigVals)
                     # compute the ratio of two trace norm of the left and right
                     # KFac matrices, and their generalization
@@ -729,7 +726,6 @@ class KfacOptimizer():
                                 tf.pow(e_tnorm, num_factors - 1.) / eig_tnorm_negList_prod, 1. / num_factors)
                         coeffs *= (e + adjustment * damping)
                 else:
-                    coeffs = 1.
                     damping = (self._epsilon + weightDecayCoeff)
                     for e in eigVals:
                         coeffs *= e

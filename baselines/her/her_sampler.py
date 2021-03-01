@@ -43,18 +43,22 @@ def make_sample_her_transitions(replay_strategy, replay_k, reward_fun):
         transitions['g'][her_indexes] = future_ag
 
         # Reconstruct info dictionary for reward  computation.
-        info = {}
-        for key, value in transitions.items():
-            if key.startswith('info_'):
-                info[key.replace('info_', '')] = value
+        info = {
+            key.replace('info_', ''): value
+            for key, value in transitions.items()
+            if key.startswith('info_')
+        }
 
         # Re-compute reward since we may have substituted the goal.
         reward_params = {k: transitions[k] for k in ['ag_2', 'g']}
         reward_params['info'] = info
         transitions['r'] = reward_fun(**reward_params)
 
-        transitions = {k: transitions[k].reshape(batch_size, *transitions[k].shape[1:])
-                       for k in transitions.keys()}
+        transitions = {
+            k: transitions[k].reshape(batch_size, *transitions[k].shape[1:])
+            for k in transitions
+        }
+
 
         assert(transitions['u'].shape[0] == batch_size_in_transitions)
 

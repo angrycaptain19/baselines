@@ -71,12 +71,12 @@ def batch_to_seq(h, nbatch, nsteps, flat=False):
 
 def seq_to_batch(h, flat = False):
     shape = h[0].get_shape().as_list()
-    if not flat:
-        assert(len(shape) > 1)
-        nh = h[0].get_shape()[-1].value
-        return tf.reshape(tf.concat(axis=1, values=h), [-1, nh])
-    else:
+    if flat:
         return tf.reshape(tf.stack(values=h, axis=1), [-1])
+
+    assert(len(shape) > 1)
+    nh = h[0].get_shape()[-1].value
+    return tf.reshape(tf.concat(axis=1, values=h), [-1, nh])
 
 def lstm(xs, ms, s, scope, nh, init_scale=1.0):
     nbatch, nin = [v.value for v in xs[0].get_shape()]
@@ -179,8 +179,8 @@ def double_linear_con(p):
 
 def double_middle_drop(p):
     eps1 = 0.75
-    eps2 = 0.25
     if 1-p<eps1:
+        eps2 = 0.25
         if 1-p<eps2:
             return eps2*0.5
         return eps1*0.1
@@ -214,7 +214,7 @@ class Scheduler(object):
 class EpisodeStats:
     def __init__(self, nsteps, nenvs):
         self.episode_rewards = []
-        for i in range(nenvs):
+        for _ in range(nenvs):
             self.episode_rewards.append([])
         self.lenbuffer = deque(maxlen=40)  # rolling buffer for episode lengths
         self.rewbuffer = deque(maxlen=40)  # rolling buffer for episode rewards
@@ -224,8 +224,8 @@ class EpisodeStats:
     def feed(self, rewards, masks):
         rewards = np.reshape(rewards, [self.nenvs, self.nsteps])
         masks = np.reshape(masks, [self.nenvs, self.nsteps])
-        for i in range(0, self.nenvs):
-            for j in range(0, self.nsteps):
+        for i in range(self.nenvs):
+            for j in range(self.nsteps):
                 self.episode_rewards[i].append(rewards[i][j])
                 if masks[i][j]:
                     l = len(self.episode_rewards[i])
@@ -257,17 +257,15 @@ def get_by_index(x, idx):
     return y
 
 def check_shape(ts,shapes):
-    i = 0
-    for (t,shape) in zip(ts,shapes):
+    for i, (t, shape) in enumerate(zip(ts,shapes)):
         assert t.get_shape().as_list()==shape, "id " + str(i) + " shape " + str(t.get_shape()) + str(shape)
-        i += 1
 
 def avg_norm(t):
     return tf.reduce_mean(tf.sqrt(tf.reduce_sum(tf.square(t), axis=-1)))
 
 def gradient_add(g1, g2, param):
     print([g1, g2, param.name])
-    assert (not (g1 is None and g2 is None)), param.name
+    assert g1 is not None or g2 is not None, param.name
     if g1 is None:
         return g2
     elif g2 is None:

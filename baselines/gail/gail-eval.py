@@ -26,8 +26,7 @@ CONFIG = {
 
 
 def load_dataset(expert_path):
-    dataset = Mujoco_Dset(expert_path=expert_path)
-    return dataset
+    return Mujoco_Dset(expert_path=expert_path)
 
 
 def argsparser():

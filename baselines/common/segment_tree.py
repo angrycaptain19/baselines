@@ -124,7 +124,7 @@ class SumSegmentTree(SegmentTree):
         idx = 1
         while idx < self._capacity:  # while non-leaf
             if self._value[2 * idx] > prefixsum:
-                idx = 2 * idx
+                idx *= 2
             else:
                 prefixsum -= self._value[2 * idx]
                 idx = 2 * idx + 1
